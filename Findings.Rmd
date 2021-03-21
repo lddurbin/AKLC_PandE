@@ -1,0 +1,36 @@
+---
+title: "Programmes and Events Pilot Analysis"
+author: "Lee Durbin"
+date: "3/19/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("ggplot2")
+
+source("analysis.R")
+```
+
+## Inside the Library vs Outside the Library
+
+```{r loction_is_lib, echo = FALSE}
+df %>% 
+  filter(!is.na(location_is_library)) %>% 
+  count(location_is_library) %>% 
+  ggplot(mapping = aes(x = location_is_library, y = n)) +
+  geom_col() + 
+  geom_text(aes(label=n), position=position_dodge(width=0.9), vjust=-0.25)
+```
+
+## Library-led, external-led, or co-delivered?
+
+
+```{r delivery_agent, echo=FALSE}
+df %>% 
+  count(delivery_agent) %>% 
+  ggplot(mapping = aes(x = delivery_agent, y = n)) +
+  geom_col() +
+  geom_text(aes(label=n), position=position_dodge(width=0.9), vjust=-0.25)
+```
+
