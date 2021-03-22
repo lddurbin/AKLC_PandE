@@ -23,7 +23,14 @@ source("analysis.R")
 ```
 
 ```{r functions, include=FALSE}
-
+plot_finishes <- function(g) {
+  g + 
+    geom_col() +
+    theme_fivethirtyeight() +
+    geom_text(aes(label=n), hjust=1.25, colour = "white") +
+    coord_flip() +
+    labs(x = "", y = "Number of sessions")
+}
 ```
 
 
@@ -31,7 +38,17 @@ source("analysis.R")
 
 How many sessions were delivered inside a library vs outside a library?
 
-```{r loction_is_lib, echo = FALSE}
+```{r loction_is_lib_chart, echo = FALSE}
+data <- df %>% 
+  filter(!is.na(location_is_library)) %>% 
+  count(location_is_library)
+  
+g <- ggplot(data, mapping = aes(x = reorder(location_is_library, n), y = n))
+
+plot_finishes(g)
+```
+
+```{r loction_is_lib_table, echo = FALSE}
 df %>% 
   filter(!is.na(location_is_library)) %>% 
     mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
@@ -44,24 +61,49 @@ df %>%
       autoWidth = TRUE
     )
   )
-
-data <- df %>% 
-  filter(!is.na(location_is_library)) %>% 
-  count(location_is_library)
-  
-g <- ggplot(data, mapping = aes(x = reorder(location_is_library, -n), y = n)) +
-  geom_col() +
-  theme_fivethirtyeight()
-
-g + geom_text(aes(label=n), position=position_dodge(width=0.9), vjust=1.5, color = "white") +
-  labs(x = "", y = "Number of sessions")
 ```
 
 ## Delivery group
 
 How many sessions were co-delivered, how many were delivered by a library, and how many were delivered by an external?
 
-```{r delivery_group, echo=FALSE}
+```{r delivery_group_chart, echo=FALSE}
+data <- df %>% 
+  count(delivery_group)
+
+g <- ggplot(data, mapping = aes(x = reorder(delivery_group, n), y = n))
+
+plot_finishes(g)
+
+```
+
+Of the sessions that were *not* co-delivered, how many were delivered by each delivery agent?
+
+```{r delivery_entities_chart, echo=FALSE}
+data <- df %>% 
+  filter(was_the_session_co_delivered_with_other_library_teams_or_other_partners == "No") %>% 
+  count(who_delivered_the_session)
+
+g <- data %>% ggplot(mapping = aes(x = reorder(who_delivered_the_session, n), y = n))
+
+plot_finishes(g)
+```
+
+Of the sessions that *were* co-delivered, how many were delivered by each delivery agent?
+
+```{r co-delivery_entities, echo=FALSE}
+data <- df %>% 
+  filter(was_the_session_co_delivered_with_other_library_teams_or_other_partners == "Yes") %>% 
+  count(with_whom_was_the_session_co_delivered)
+
+g <- data %>% ggplot(mapping = aes(x = reorder(with_whom_was_the_session_co_delivered, n), y = n))
+
+plot_finishes(g)
+  
+```
+
+
+```{r delivery_group_table, echo=FALSE}
 df %>% 
   mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
   select(id, "Session Name" = what_was_the_name_of_the_session, "Delivery agent" = who_delivered_the_session, "Co-delivery agents" = with_whom_was_the_session_co_delivered, "Delivery Group" = delivery_group) %>% 
@@ -73,54 +115,6 @@ df %>%
       autoWidth = TRUE
     )
   )
-
-data <- df %>% 
-  count(delivery_group)
-
-g <- ggplot(data, mapping = aes(x = reorder(delivery_group, -n), y = n)) +
-  geom_col() +
-  theme_fivethirtyeight()
-
-g + geom_text(aes(label=n), position=position_dodge(width=0.9), vjust=1.5, color = "white") +
-  labs(x = "", y = "Number of sessions")
-
-```
-
-## Delivery agent
-
-Of the sessions that were *not* co-delivered, how many were delivered by each delivery agent?
-
-```{r delivery_entities, echo=FALSE}
-data <- df %>% 
-  filter(was_the_session_co_delivered_with_other_library_teams_or_other_partners == "No") %>% 
-  count(who_delivered_the_session)
-
-g <- data %>% ggplot(mapping = aes(x = reorder(who_delivered_the_session, n), y = n)) +
-  geom_col() +
-  theme_fivethirtyeight()
-
-g + geom_text(aes(label=n), hjust=1.25, colour = "white") +
-  coord_flip() +
-  labs(x = "", y = "Number of sessions")
-```
-
-## Co-delivery agent
-
-Of the sessions that *were* co-delivered, how many were delivered by each delivery agent?
-
-```{r co-delivery_entities, echo=FALSE}
-data <- df %>% 
-  filter(was_the_session_co_delivered_with_other_library_teams_or_other_partners == "Yes") %>% 
-  count(with_whom_was_the_session_co_delivered)
-
-g <- data %>% ggplot(mapping = aes(x = reorder(with_whom_was_the_session_co_delivered, n), y = n)) +
-  geom_col() +
-  theme_fivethirtyeight()
-
-g + geom_text(aes(label=n), hjust=1.25, colour = "white") +
-  labs(y = "", x = "Number of sessions") +
-  coord_flip()
-  
 ```
 
 ## Target audiences: Māori or Pasifika
@@ -131,27 +125,99 @@ Was the session designed to specifically benefit Māori or Pasifika?
 data <- df %>% 
   count(was_the_session_designed_to_specifically_benefit_maori_or_pasifika)
 
-g <- data %>% ggplot(mapping = aes(x = reorder(was_the_session_designed_to_specifically_benefit_maori_or_pasifika, n), y = n)) +
-  geom_col() +
-  theme_fivethirtyeight()
+g <- data %>% ggplot(mapping = aes(x = reorder(was_the_session_designed_to_specifically_benefit_maori_or_pasifika, -n), y = n))
 
-g + geom_text(aes(label=n), hjust=1.25, colour = "white") +
-  labs(y = "", x = "Number of sessions") +
-  coord_flip()
+plot_finishes(g)
   
 ```
+
+Which community was the session designed to specifically benefit, Māori or Pasifika?
 
 ```{r maori_pasifika, echo=FALSE}
 data <- df %>% 
   filter(was_the_session_designed_to_specifically_benefit_maori_or_pasifika == "Yes") %>% 
   count(which_community_was_the_session_designed_to_specifically_benefit)
 
-g <- data %>% ggplot(mapping = aes(x = reorder(which_community_was_the_session_designed_to_specifically_benefit, n), y = n)) +
-  geom_col() +
-  theme_fivethirtyeight()
+g <- data %>% ggplot(mapping = aes(x = reorder(which_community_was_the_session_designed_to_specifically_benefit, n), y = n))
 
-g + geom_text(aes(label=n), hjust=1.25, colour = "white") +
-  labs(y = "", x = "Number of sessions") +
-  coord_flip()
+plot_finishes(g)
   
+```
+
+```{r ethnic_groups_table, echo=FALSE}
+df %>% 
+  filter(was_the_session_designed_to_specifically_benefit_maori_or_pasifika == "Yes") %>% 
+  mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
+  select(id, "Session Name" = what_was_the_name_of_the_session, "Māori, Pasifika, or both?" = which_community_was_the_session_designed_to_specifically_benefit) %>% 
+  DT::datatable(
+    caption = 'Sessions designed to specifically benefit Māori or Pasifika',
+    filter = "top",
+    rownames = FALSE,
+    options = list(
+      autoWidth = TRUE
+    )
+  )
+```
+
+## Target audiences: other communities
+
+Was the session designed to specifically benefit other communities?
+
+```{r other_communities, echo=FALSE}
+data <- df %>% 
+  count(was_the_session_designed_to_specifically_benefit_other_communities)
+
+g <- data %>% ggplot(mapping = aes(x = reorder(was_the_session_designed_to_specifically_benefit_other_communities, -n), y = n))
+
+plot_finishes(g)
+```
+
+```{r other_communities_list, echo=FALSE}
+data <- df %>% 
+  filter(was_the_session_designed_to_specifically_benefit_other_communities == "Yes") %>% 
+  count(which_community_or_communities_was_the_session_designed_to_specifically_benefit)
+
+g <- data %>% ggplot(mapping = aes(x = reorder(which_community_or_communities_was_the_session_designed_to_specifically_benefit, n), y = n))
+
+plot_finishes(g)
+```
+
+```{r other_communities_table, echo=FALSE}
+df %>% 
+  filter(was_the_session_designed_to_specifically_benefit_other_communities == "Yes") %>% 
+  mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
+  select(id, "Session Name" = what_was_the_name_of_the_session, "Other communities" = which_community_or_communities_was_the_session_designed_to_specifically_benefit) %>% 
+  DT::datatable(
+    caption = 'Sessions designed to specifically benefit other communities',
+    filter = "top",
+    rownames = FALSE,
+    options = list(
+      autoWidth = TRUE
+    )
+  )
+```
+
+## Target audiences: age groups
+
+Was the session designed to specifically benefit a target age group?
+
+```{r target_age_group, echo=FALSE}
+data <- df %>% 
+  count(was_the_activity_designed_to_specifically_benefit_a_target_age_group)
+
+g <- data %>% ggplot(mapping = aes(x = reorder(was_the_activity_designed_to_specifically_benefit_a_target_age_group, n), y = n))
+
+plot_finishes(g)
+```
+
+What was the target age group for the session?
+
+```{r age_groups, echo=FALSE}
+data <- df %>% 
+  filter(was_the_activity_designed_to_specifically_benefit_a_target_age_group == "Yes") %>% 
+  count(what_was_the_target_age_group_for_the_session)
+
+g <- data %>% ggplot(mapping = aes(x = reorder(what_was_the_target_age_group_for_the_session, n), y = n))
+
+plot_finishes(g)
 ```
