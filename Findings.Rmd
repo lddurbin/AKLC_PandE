@@ -1,5 +1,5 @@
 ---
-title: "Programmes and Events Pilot Analysis"
+title: "Libraries Activity Pilot: Programmes and Events Analysis"
 author: "Lee Durbin"
 date: "`r format(Sys.time(), '%d %B, %Y')`"
 
@@ -33,6 +33,11 @@ plot_finishes <- function(g) {
 }
 ```
 
+The Libraries Activity pilot took place between **Thursday February 25 2021 and Wednesday March 17 2021**. We invited users to enter data using two forms, one for Programmes and Events and one for Services. **38 individuals** participated in the pilot.
+
+We received **214 entries** via the Programmes and Events form, and of those **79 included feedback**. We received **130 entries** via the Services form, and of those **28 included feedback**. In addition, we received **29 pieces of feedback** via a separate feedback form.
+
+The following analysis looks at the entries provided via the Programmes and Events form.
 
 ## Inside a library vs outside a library
 
@@ -52,7 +57,7 @@ plot_finishes(g)
 df %>% 
   filter(!is.na(location_is_library)) %>% 
     mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
-  select(id, "Session Name" = what_was_the_name_of_the_session, "Location" = where_was_the_session_delivered, "Locatioon Group" = location_is_library) %>% 
+  select(id, "Session Name" = what_was_the_name_of_the_session, "Location" = where_was_the_session_delivered, "Locatioon Group" = location_is_library, "Category" = how_would_you_categorise_this_session, "Content" = content) %>% 
   DT::datatable(
     caption = 'Sessions inside a community library vs outside a community library',
     filter = "top",
@@ -102,11 +107,10 @@ plot_finishes(g)
   
 ```
 
-
 ```{r delivery_group_table, echo=FALSE}
 df %>% 
   mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
-  select(id, "Session Name" = what_was_the_name_of_the_session, "Delivery agent" = who_delivered_the_session, "Co-delivery agents" = with_whom_was_the_session_co_delivered, "Delivery Group" = delivery_group) %>% 
+  select(id, "Session Name" = what_was_the_name_of_the_session, "Delivery agent" = who_delivered_the_session, "Co-delivery agents" = with_whom_was_the_session_co_delivered, "Delivery Group" = delivery_group, "Category" = how_would_you_categorise_this_session, "Content" = content) %>% 
   DT::datatable(
     caption = 'Sessions by delivery group',
     filter = "top",
@@ -148,7 +152,7 @@ plot_finishes(g)
 df %>% 
   filter(was_the_session_designed_to_specifically_benefit_maori_or_pasifika == "Yes") %>% 
   mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
-  select(id, "Session Name" = what_was_the_name_of_the_session, "Māori, Pasifika, or both?" = which_community_was_the_session_designed_to_specifically_benefit) %>% 
+  select(id, "Session Name" = what_was_the_name_of_the_session, "Māori, Pasifika, or both?" = which_community_was_the_session_designed_to_specifically_benefit, "Category" = how_would_you_categorise_this_session, "Content" = content) %>% 
   DT::datatable(
     caption = 'Sessions designed to specifically benefit Māori or Pasifika',
     filter = "top",
@@ -186,7 +190,7 @@ plot_finishes(g)
 df %>% 
   filter(was_the_session_designed_to_specifically_benefit_other_communities == "Yes") %>% 
   mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
-  select(id, "Session Name" = what_was_the_name_of_the_session, "Other communities" = which_community_or_communities_was_the_session_designed_to_specifically_benefit) %>% 
+  select(id, "Session Name" = what_was_the_name_of_the_session, "Other communities" = which_community_or_communities_was_the_session_designed_to_specifically_benefit, "Category" = how_would_you_categorise_this_session, "Content" = content) %>% 
   DT::datatable(
     caption = 'Sessions designed to specifically benefit other communities',
     filter = "top",
@@ -221,3 +225,89 @@ g <- data %>% ggplot(mapping = aes(x = reorder(what_was_the_target_age_group_for
 
 plot_finishes(g)
 ```
+
+```{r age_groups_table, echo=FALSE}
+df %>% 
+  filter(was_the_activity_designed_to_specifically_benefit_a_target_age_group == "Yes") %>% 
+  mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
+  select(id, "Session Name" = what_was_the_name_of_the_session, "Age group" = what_was_the_target_age_group_for_the_session, "Category" = how_would_you_categorise_this_session, "Content" = content) %>% 
+  DT::datatable(
+    caption = 'Sessions by age group',
+    filter = "top",
+    rownames = FALSE,
+    options = list(
+      autoWidth = TRUE
+    )
+  )
+```
+
+
+## Categories and Content
+
+How would you categorise this session?
+
+```{r categories_chart, echo=FALSE}
+data <- df %>% 
+  filter(!is.na(how_would_you_categorise_this_session)) %>% 
+  count(how_would_you_categorise_this_session)
+
+g <- data %>% ggplot(mapping = aes(x = reorder(how_would_you_categorise_this_session, n), y = n))
+
+plot_finishes(g)
+```
+
+What was the primary focus or content of this session? Show only the content options that were selected for more than one session.
+
+```{r content_chart, echo=FALSE}
+data <- df %>% 
+  count(content) %>% 
+  filter(n > 1)
+
+g <- data %>% ggplot(mapping = aes(x = reorder(content, n), y = n))
+
+plot_finishes(g)
+```
+
+```{r category_content_table, echo=FALSE}
+df %>% 
+  filter(!is.na(how_would_you_categorise_this_session)) %>% 
+  mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
+  select(id, "Session Name" = what_was_the_name_of_the_session, "Category" = how_would_you_categorise_this_session, "Content" = content) %>% 
+  DT::datatable(
+    caption = 'Sessions by category and content',
+    filter = "top",
+    rownames = FALSE,
+    options = list(
+      autoWidth = TRUE
+    )
+  )
+```
+
+## Outreach
+
+Was the session designed for and delivered to people that would not usually come to the library or community hub?
+
+```{r outreach_overall, echo=FALSE}
+data <- df %>% 
+  count(was_the_session_designed_and_delivered_to_people_that_would_not_usually_come_to_the_library) 
+
+g <- data %>% ggplot(mapping = aes(x = reorder(was_the_session_designed_and_delivered_to_people_that_would_not_usually_come_to_the_library, -n), y = n))
+
+plot_finishes(g)
+```
+
+```{r outreach_table, echo=FALSE}
+df %>% 
+  mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
+  filter(was_the_session_designed_and_delivered_to_people_that_would_not_usually_come_to_the_library == "Yes, this was an outreach activity") %>% 
+  select(id, "Session Name" = what_was_the_name_of_the_session, "Location" = location) %>% 
+  DT::datatable(
+    caption = 'Outreach sessions and their locations',
+    filter = "top",
+    rownames = FALSE,
+    options = list(
+      autoWidth = TRUE
+    )
+  )
+```
+
