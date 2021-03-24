@@ -178,10 +178,21 @@ plot_finishes(g)
 
 ```{r other_communities_list, echo=FALSE}
 data <- df %>% 
-  filter(was_the_session_designed_to_specifically_benefit_other_communities == "Yes") %>% 
-  count(which_community_or_communities_was_the_session_designed_to_specifically_benefit)
+  filter(!is.na(which_community_or_communities_was_the_session_designed_to_specifically_benefit)) %>% 
+  select(id, which_community_or_communities_was_the_session_designed_to_specifically_benefit) %>% 
+  mutate(other_communities_tidied = strsplit(as.character(which_community_or_communities_was_the_session_designed_to_specifically_benefit), ",")) %>%
+  unnest(other_communities_tidied) %>%
+  mutate(other_communities_tidied = str_replace_all(other_communities_tidied, c('"'), "")) %>%
+  mutate(other_communities_tidied = str_replace_all(other_communities_tidied, '\\[', "")) %>%
+  mutate(other_communities_tidied = str_replace_all(other_communities_tidied, '\\]', "")) %>% 
+  mutate(communities_other = case_when(
+    other_communities_tidied %in% other_communities$communities ~ other_communities_tidied,
+    !other_communities_tidied %in% other_communities$communities ~ "Other",
+  )
+  ) %>% 
+  count(communities_other)
 
-g <- data %>% ggplot(mapping = aes(x = reorder(which_community_or_communities_was_the_session_designed_to_specifically_benefit, n), y = n))
+g <- data %>% ggplot(mapping = aes(x = reorder(communities_other, n), y = n))
 
 plot_finishes(g)
 ```
@@ -189,8 +200,18 @@ plot_finishes(g)
 ```{r other_communities_table, echo=FALSE}
 df %>% 
   filter(was_the_session_designed_to_specifically_benefit_other_communities == "Yes") %>% 
+  mutate(other_communities_tidied = strsplit(as.character(which_community_or_communities_was_the_session_designed_to_specifically_benefit), ",")) %>%
+  unnest(other_communities_tidied) %>%
+  mutate(other_communities_tidied = str_replace_all(other_communities_tidied, c('"'), "")) %>%
+  mutate(other_communities_tidied = str_replace_all(other_communities_tidied, '\\[', "")) %>%
+  mutate(other_communities_tidied = str_replace_all(other_communities_tidied, '\\]', "")) %>% 
+  mutate(communities_other = case_when(
+    other_communities_tidied %in% other_communities$communities ~ "Selection",
+    !other_communities_tidied %in% other_communities$communities ~ "Other",
+  )
+  ) %>% 
   mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
-  select(id, "Session Name" = what_was_the_name_of_the_session, "Other communities" = which_community_or_communities_was_the_session_designed_to_specifically_benefit, "Category" = how_would_you_categorise_this_session, "Content" = content) %>% 
+  select(id, "Session Name" = what_was_the_name_of_the_session, "Communities" = other_communities_tidied, "Communities Other?" = communities_other, "Category" = how_would_you_categorise_this_session, "Content" = content) %>% 
   DT::datatable(
     caption = 'Sessions designed to specifically benefit other communities',
     filter = "top",
@@ -256,12 +277,15 @@ g <- data %>% ggplot(mapping = aes(x = reorder(how_would_you_categorise_this_ses
 plot_finishes(g)
 ```
 
-What was the primary focus or content of this session? Show only the content options that were selected for more than one session.
+What was the primary focus or content of this session?
 
 ```{r content_chart, echo=FALSE}
 data <- df %>% 
-  count(content) %>% 
-  filter(n > 1)
+  mutate(content = case_when(
+    content_other == "Other" ~ "Other",
+    content_other != "Other" ~ content
+  )) %>% 
+  count(content)
 
 g <- data %>% ggplot(mapping = aes(x = reorder(content, n), y = n))
 
@@ -272,7 +296,7 @@ plot_finishes(g)
 df %>% 
   filter(!is.na(how_would_you_categorise_this_session)) %>% 
   mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
-  select(id, "Session Name" = what_was_the_name_of_the_session, "Category" = how_would_you_categorise_this_session, "Content" = content) %>% 
+  select(id, "Session Name" = what_was_the_name_of_the_session, "Category" = how_would_you_categorise_this_session, "Content" = content, "Content Other?" = content_other) %>% 
   DT::datatable(
     caption = 'Sessions by category and content',
     filter = "top",
@@ -300,7 +324,7 @@ plot_finishes(g)
 df %>% 
   mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
   filter(was_the_session_designed_and_delivered_to_people_that_would_not_usually_come_to_the_library == "Yes, this was an outreach activity") %>% 
-  select(id, "Session Name" = what_was_the_name_of_the_session, "Location" = location) %>% 
+  select(id, "Session Name" = what_was_the_name_of_the_session, "Location" = location, "Location group" = location_is_library) %>% 
   DT::datatable(
     caption = 'Outreach sessions and their locations',
     filter = "top",
