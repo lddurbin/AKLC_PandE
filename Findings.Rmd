@@ -57,7 +57,7 @@ plot_finishes(g)
 df %>% 
   filter(!is.na(location_is_library)) %>% 
     mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
-  select(id, "Session Name" = what_was_the_name_of_the_session, "Location" = where_was_the_session_delivered, "Locatioon Group" = location_is_library, "Category" = how_would_you_categorise_this_session, "Content" = content) %>% 
+  select(id, "Team" = which_team_was_primarily_responsible_for_this_session, "Session Name" = what_was_the_name_of_the_session, "Location" = where_was_the_session_delivered, "Locatioon Group" = location_is_library, "Category" = how_would_you_categorise_this_session, "Content" = content) %>% 
   DT::datatable(
     caption = 'Sessions inside a community library vs outside a community library',
     filter = "top",
@@ -110,7 +110,7 @@ plot_finishes(g)
 ```{r delivery_group_table, echo=FALSE}
 df %>% 
   mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
-  select(id, "Session Name" = what_was_the_name_of_the_session, "Delivery agent" = who_delivered_the_session, "Co-delivery agents" = with_whom_was_the_session_co_delivered, "Delivery Group" = delivery_group, "Category" = how_would_you_categorise_this_session, "Content" = content) %>% 
+  select(id, "Team" = which_team_was_primarily_responsible_for_this_session, "Session Name" = what_was_the_name_of_the_session, "Delivery agent" = who_delivered_the_session, "Co-delivery agents" = with_whom_was_the_session_co_delivered, "Delivery Group" = delivery_group, "Category" = how_would_you_categorise_this_session, "Content" = content) %>% 
   DT::datatable(
     caption = 'Sessions by delivery group',
     filter = "top",
@@ -152,7 +152,7 @@ plot_finishes(g)
 df %>% 
   filter(was_the_session_designed_to_specifically_benefit_maori_or_pasifika == "Yes") %>% 
   mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
-  select(id, "Session Name" = what_was_the_name_of_the_session, "Māori, Pasifika, or both?" = which_community_was_the_session_designed_to_specifically_benefit, "Category" = how_would_you_categorise_this_session, "Content" = content) %>% 
+  select(id, "Team" = which_team_was_primarily_responsible_for_this_session, "Session Name" = what_was_the_name_of_the_session, "Māori, Pasifika, or both?" = which_community_was_the_session_designed_to_specifically_benefit, "Category" = how_would_you_categorise_this_session, "Content" = content) %>% 
   DT::datatable(
     caption = 'Sessions designed to specifically benefit Māori or Pasifika',
     filter = "top",
@@ -211,7 +211,7 @@ df %>%
   )
   ) %>% 
   mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
-  select(id, "Session Name" = what_was_the_name_of_the_session, "Communities" = other_communities_tidied, "Communities Other?" = communities_other, "Category" = how_would_you_categorise_this_session, "Content" = content) %>% 
+  select(id, "Team" = which_team_was_primarily_responsible_for_this_session, "Session Name" = what_was_the_name_of_the_session, "Communities" = other_communities_tidied, "Communities Other?" = communities_other, "Category" = how_would_you_categorise_this_session, "Content" = content) %>% 
   DT::datatable(
     caption = 'Sessions designed to specifically benefit other communities',
     filter = "top",
@@ -249,9 +249,11 @@ plot_finishes(g)
 
 ```{r age_groups_table, echo=FALSE}
 df %>% 
-  filter(was_the_activity_designed_to_specifically_benefit_a_target_age_group == "Yes") %>% 
-  mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
-  select(id, "Session Name" = what_was_the_name_of_the_session, "Age group" = what_was_the_target_age_group_for_the_session, "Category" = how_would_you_categorise_this_session, "Content" = content) %>% 
+  mutate(what_was_the_target_age_group_for_the_session = case_when(
+    is.na(what_was_the_target_age_group_for_the_session) ~ "None",
+    !is.na(what_was_the_target_age_group_for_the_session) ~ what_was_the_target_age_group_for_the_session
+  ), across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
+  select(id, "Team" = which_team_was_primarily_responsible_for_this_session, "Session Name" = what_was_the_name_of_the_session, "Age group" = what_was_the_target_age_group_for_the_session, "Category" = how_would_you_categorise_this_session, "Content" = content) %>% 
   DT::datatable(
     caption = 'Sessions by age group',
     filter = "top",
@@ -295,8 +297,12 @@ plot_finishes(g)
 ```{r category_content_table, echo=FALSE}
 df %>% 
   filter(!is.na(how_would_you_categorise_this_session)) %>% 
+  mutate(how_would_you_categorise_this_session = case_when(
+    is.na(please_categorise_this_session_using_your_own_words) ~ how_would_you_categorise_this_session,
+    !is.na(please_categorise_this_session_using_your_own_words) ~ please_categorise_this_session_using_your_own_words
+  )) %>% 
   mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
-  select(id, "Session Name" = what_was_the_name_of_the_session, "Category" = how_would_you_categorise_this_session, "Content" = content, "Content Other?" = content_other) %>% 
+  select(id, "Team" = which_team_was_primarily_responsible_for_this_session, "Session Name" = what_was_the_name_of_the_session, "Category Other?" = category_other, "Category" = how_would_you_categorise_this_session, "Content Other?" = content_other, "Content" = content) %>% 
   DT::datatable(
     caption = 'Sessions by category and content',
     filter = "top",
@@ -324,7 +330,7 @@ plot_finishes(g)
 df %>% 
   mutate(across(where(is.character) & !what_was_the_name_of_the_session, as.factor)) %>% 
   filter(was_the_session_designed_and_delivered_to_people_that_would_not_usually_come_to_the_library == "Yes, this was an outreach activity") %>% 
-  select(id, "Session Name" = what_was_the_name_of_the_session, "Location" = location, "Location group" = location_is_library) %>% 
+  select(id, "Team" = which_team_was_primarily_responsible_for_this_session, "Session Name" = what_was_the_name_of_the_session, "Location" = location, "Location group" = location_is_library) %>% 
   DT::datatable(
     caption = 'Outreach sessions and their locations',
     filter = "top",

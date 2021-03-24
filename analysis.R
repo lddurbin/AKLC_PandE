@@ -24,6 +24,10 @@ df <- read_excel("P_and_E_data.xlsx") %>%
       who_delivered_the_session == "The library’s team" ~ "Library",
       who_delivered_the_session != "The library's team" ~ "External"
     ),
+    category_other = case_when(
+      is.na(please_categorise_this_session_using_your_own_words) ~ "Selection",
+      !is.na(please_categorise_this_session_using_your_own_words) ~ "Other"
+    ),
     content = case_when(
       content == "Arts & Crafts" ~ "arts & craft",
       !is.na(content) ~ str_trim(content) %>% str_to_lower()
